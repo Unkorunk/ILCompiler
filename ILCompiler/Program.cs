@@ -9,6 +9,8 @@ namespace ILCompiler
     internal class Program
     {
         public delegate long CompileResult(long x, long y, long z);
+        
+        private static List<long> constStorage = new List<long>();
 
         public enum Token
         {
@@ -19,10 +21,11 @@ namespace ILCompiler
             Add,
             Sub,
             Mul,
-            Div
+            Div,
+            Const
         }
 
-        private static Token ToToken(String rawToken)
+        private static Token ToToken(string rawToken)
         {
             switch (rawToken)
             {
@@ -33,8 +36,14 @@ namespace ILCompiler
                 case "-": return Token.Sub;
                 case "*": return Token.Mul;
                 case "/": return Token.Div;
-                default: throw new Exception("unexpected symbol");
             }
+
+            if (long.TryParse(rawToken, out _))
+            {
+                return Token.Const;
+            }
+            
+            throw new Exception("unexpected symbol");
         }
 
         private static int GetPriority(Token token)
@@ -51,8 +60,8 @@ namespace ILCompiler
                     throw new Exception("unexpected token");
             }
         }
-
-        private static void EmitToken(in ILGenerator generator, Token token)
+        
+        private static void EmitToken(in ILGenerator generator, Token token, int constIndex = -1)
         {
             switch (token)
             {
@@ -78,6 +87,9 @@ namespace ILCompiler
                     break;
                 case Token.Stack:
                     break;
+                case Token.Const:
+                    generator.Emit(OpCodes.Ldc_I8, constStorage[constIndex]);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(token), token, null);
             }
@@ -87,9 +99,14 @@ namespace ILCompiler
         {
             var rawTokens = expression.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
             var tokens = new Token[rawTokens.Length];
+            var constIndex = 0;
             for (var i = 0; i < rawTokens.Length; i++)
             {
                 tokens[i] = ToToken(rawTokens[i]);
+                if (tokens[i] == Token.Const)
+                {
+                    constStorage.Add(long.Parse(rawTokens[i]));
+                }
             }
 
             var dynamicMethod = new DynamicMethod(Guid.NewGuid().ToString(),
@@ -99,12 +116,18 @@ namespace ILCompiler
             var generator = dynamicMethod.GetILGenerator();
 
             var variableStack = new Stack<Token>();
+            var constStack = new Stack<int>();
             var operationStack = new Stack<Token>();
 
             foreach (var token in tokens)
             {
                 if (token == Token.X || token == Token.Y || token == Token.Z)
                 {
+                    variableStack.Push(token);
+                }
+                else if (token == Token.Const)
+                {
+                    constStack.Push(constIndex++);
                     variableStack.Push(token);
                 }
                 else
@@ -114,9 +137,20 @@ namespace ILCompiler
                         var secondArg = variableStack.Pop();
                         var firstArg = variableStack.Pop();
                         var operation = operationStack.Pop();
+
+                        var firstConstIndex = -1;
+                        var secondConstIndex = -1;
+                        if (firstArg == Token.Const)
+                        {
+                            firstConstIndex = constStack.Pop();
+                        }
+                        if (secondArg == Token.Const)
+                        {
+                            secondConstIndex = constStack.Pop();
+                        }
                         
-                        EmitToken(generator, firstArg);
-                        EmitToken(generator, secondArg);
+                        EmitToken(generator, firstArg, firstConstIndex);
+                        EmitToken(generator, secondArg, secondConstIndex);
                         EmitToken(generator, operation);
                         variableStack.Push(Token.Stack);
                     }
@@ -129,9 +163,20 @@ namespace ILCompiler
                 var secondArg = variableStack.Pop();
                 var firstArg = variableStack.Pop();
                 var operation = operationStack.Pop();
+
+                var firstConstIndex = -1;
+                var secondConstIndex = -1;
+                if (firstArg == Token.Const)
+                {
+                    firstConstIndex = constStack.Pop();
+                }
+                if (secondArg == Token.Const)
+                {
+                    secondConstIndex = constStack.Pop();
+                }
                         
-                EmitToken(generator, firstArg);
-                EmitToken(generator, secondArg);
+                EmitToken(generator, firstArg, firstConstIndex);
+                EmitToken(generator, secondArg, secondConstIndex);
                 EmitToken(generator, operation);
                 variableStack.Push(Token.Stack);
             }
@@ -143,7 +188,7 @@ namespace ILCompiler
 
         public static void Main(string[] args)
         {
-            var result = Compile("x * x + y * x + z");
+            var result = Compile("x * x + 2 * x + 1");
 
             Console.WriteLine(result.Invoke(4, 2, 1));
         }
