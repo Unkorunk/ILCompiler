@@ -102,8 +102,14 @@ namespace ILCompiler
             }
         }
 
-        public static CompileResult Compile(String expression)
+        public static CompileResult Compile(string expression)
         {
+            var symbols = new[] { "+", "-", "*", "/", "x", "y", "z", "(", ")" };
+            foreach (var symbol in symbols)
+            {
+                expression = expression.Replace(symbol, " " + symbol + " ");
+            }
+            
             var rawTokens = expression.Split(new[] {' '}, StringSplitOptions.RemoveEmptyEntries);
             var tokens = new Token[rawTokens.Length];
             var constIndex = 0;
@@ -213,7 +219,7 @@ namespace ILCompiler
 
         public static void Main(string[] args)
         {
-            var result = Compile("x * ( 1 - y ) + z * z / 4");
+            var result = Compile("   x* (1 -y) + z       *z/ 4   ");
             Console.WriteLine(result.Invoke(1, 1, 1)); // prints 0
             Console.WriteLine(result.Invoke(2, 2, 2)); // prints -1
             Console.WriteLine(result.Invoke(2, 3, 4)); // prints 0
