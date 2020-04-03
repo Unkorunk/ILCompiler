@@ -173,6 +173,11 @@ namespace ILCompiler
                 }
                 else if (token == Token.Close)
                 {
+                    if (operationStack.Peek() == Token.Open)
+                    {
+                        throw new Exception("empty brackets");
+                    }
+                    
                     while (operationStack.Count != 0 && operationStack.Peek() != Token.Open)
                     {
                         ProcessAction();
@@ -184,7 +189,7 @@ namespace ILCompiler
                     }
                     else
                     {
-                        throw new Exception("unbalance brackets");
+                        throw new Exception("unbalanced brackets");
                     }
                 }
                 else if (IsBinaryOperation(token))
@@ -206,7 +211,7 @@ namespace ILCompiler
             {
                 if (operationStack.Peek() == Token.Open || operationStack.Peek() == Token.Close)
                 {
-                    throw new Exception("unbalance brackets");
+                    throw new Exception("unbalanced brackets");
                 }
                 
                 ProcessAction();
