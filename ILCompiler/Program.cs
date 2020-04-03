@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Reflection.Emit;
-using System.Threading;
 
 namespace ILCompiler
 {
@@ -22,7 +20,9 @@ namespace ILCompiler
             Sub,
             Mul,
             Div,
-            Const
+            Const,
+            Open,
+            Close
         }
 
         private static Token ToToken(string rawToken)
@@ -36,6 +36,8 @@ namespace ILCompiler
                 case "-": return Token.Sub;
                 case "*": return Token.Mul;
                 case "/": return Token.Div;
+                case "(": return Token.Open;
+                case ")": return Token.Close;
             }
 
             if (long.TryParse(rawToken, out _))
@@ -44,6 +46,11 @@ namespace ILCompiler
             }
             
             throw new Exception("unexpected symbol");
+        }
+
+        private static bool IsBinaryOperation(Token token)
+        {
+            return (token == Token.Add || token == Token.Sub || token == Token.Mul || token == Token.Div);;
         }
 
         private static int GetPriority(Token token)
@@ -119,46 +126,7 @@ namespace ILCompiler
             var constStack = new Stack<int>();
             var operationStack = new Stack<Token>();
 
-            foreach (var token in tokens)
-            {
-                if (token == Token.X || token == Token.Y || token == Token.Z)
-                {
-                    variableStack.Push(token);
-                }
-                else if (token == Token.Const)
-                {
-                    constStack.Push(constIndex++);
-                    variableStack.Push(token);
-                }
-                else
-                {
-                    while (operationStack.Count != 0 && GetPriority(operationStack.Peek()) >= GetPriority(token))
-                    {
-                        var secondArg = variableStack.Pop();
-                        var firstArg = variableStack.Pop();
-                        var operation = operationStack.Pop();
-
-                        var firstConstIndex = -1;
-                        var secondConstIndex = -1;
-                        if (firstArg == Token.Const)
-                        {
-                            firstConstIndex = constStack.Pop();
-                        }
-                        if (secondArg == Token.Const)
-                        {
-                            secondConstIndex = constStack.Pop();
-                        }
-                        
-                        EmitToken(generator, firstArg, firstConstIndex);
-                        EmitToken(generator, secondArg, secondConstIndex);
-                        EmitToken(generator, operation);
-                        variableStack.Push(Token.Stack);
-                    }
-                    operationStack.Push(token);
-                }
-            }
-            
-            while (operationStack.Count != 0)
+            void ProcessAction()
             {
                 var secondArg = variableStack.Pop();
                 var firstArg = variableStack.Pop();
@@ -170,15 +138,72 @@ namespace ILCompiler
                 {
                     firstConstIndex = constStack.Pop();
                 }
+
                 if (secondArg == Token.Const)
                 {
                     secondConstIndex = constStack.Pop();
                 }
-                        
+
                 EmitToken(generator, firstArg, firstConstIndex);
                 EmitToken(generator, secondArg, secondConstIndex);
                 EmitToken(generator, operation);
                 variableStack.Push(Token.Stack);
+            }
+
+            foreach (var token in tokens)
+            {
+                if (token == Token.X || token == Token.Y || token == Token.Z)
+                {
+                    variableStack.Push(token);
+                }
+                else if (token == Token.Const)
+                {
+                    constStack.Push(constIndex++);
+                    variableStack.Push(token);
+                }
+                else if (token == Token.Open)
+                {
+                    operationStack.Push(token);
+                }
+                else if (token == Token.Close)
+                {
+                    while (operationStack.Count != 0 && operationStack.Peek() != Token.Open)
+                    {
+                        ProcessAction();
+                    }
+
+                    if (operationStack.Peek() == Token.Open)
+                    {
+                        operationStack.Pop();
+                    }
+                    else
+                    {
+                        throw new Exception("unbalance brackets");
+                    }
+                }
+                else if (IsBinaryOperation(token))
+                {
+                    while (operationStack.Count != 0 && 
+                           IsBinaryOperation(operationStack.Peek()) && GetPriority(operationStack.Peek()) >= GetPriority(token))
+                    {
+                        ProcessAction();
+                    }
+                    operationStack.Push(token);
+                }
+                else
+                {
+                    throw new Exception("unexpected token");
+                }
+            }
+            
+            while (operationStack.Count != 0)
+            {
+                if (operationStack.Peek() == Token.Open || operationStack.Peek() == Token.Close)
+                {
+                    throw new Exception("unbalance brackets");
+                }
+                
+                ProcessAction();
             }
             
             generator.Emit(OpCodes.Ret);
@@ -188,9 +213,11 @@ namespace ILCompiler
 
         public static void Main(string[] args)
         {
-            var result = Compile("x * x + 2 * x + 1");
-
-            Console.WriteLine(result.Invoke(4, 2, 1));
+            var result = Compile("x * ( 1 - y ) + z * z / 4");
+            Console.WriteLine(result.Invoke(1, 1, 1)); // prints 0
+            Console.WriteLine(result.Invoke(2, 2, 2)); // prints -1
+            Console.WriteLine(result.Invoke(2, 3, 4)); // prints 0
+            Console.WriteLine(result.Invoke(1, 0, 2)); // prints 2
         }
     }
 }
