@@ -42,6 +42,7 @@ namespace ILCompiler.SyntaxTree
                     break;
                 case DataType.Static:
                     var fieldInfo = scope.GetField((string) _source);
+                    if (fieldInfo == null) throw new Exception("use of uninitialized variable");
                     if (fieldInfo.FieldType != typeof(long))
                     {
                         throw new Exception("invalid field type");
@@ -65,6 +66,7 @@ namespace ILCompiler.SyntaxTree
                     break;
                 case DataType.Static:
                     var fieldInfo = scope.GetField((string) _source);
+                    if (fieldInfo == null) throw new Exception("use of uninitialized variable");
                     if (fieldInfo.FieldType != typeof(long))
                     {
                         throw new Exception("invalid field type");
