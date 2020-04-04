@@ -46,7 +46,7 @@ namespace ILCompiler.SyntaxTree
                     {
                         throw new Exception("invalid field type");
                     }
-                    generator.Emit(OpCodes.Stfld, fieldInfo);
+                    generator.Emit(OpCodes.Stsfld, fieldInfo);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -69,7 +69,7 @@ namespace ILCompiler.SyntaxTree
                     {
                         throw new Exception("invalid field type");
                     }
-                    generator.Emit(OpCodes.Ldfld, fieldInfo);
+                    generator.Emit(OpCodes.Ldsfld, fieldInfo);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

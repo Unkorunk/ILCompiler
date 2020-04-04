@@ -27,21 +27,24 @@ namespace ILCompiler
             
             return dynamicMethod.CreateDelegate(typeof(CompileResult)) as CompileResult;
         }
+
+        public static long Index = 2;
         
         public static void Main(string[] args)
         {
             var sourceText = @"
-decl a=1, b, i=2;
+decl a=1, b;
 b = 1;
-while (i != 30) {
+while (Index != 30) {
     a = a + b;
     b = a - b;
-    i = i + 1;
+    Index = Index + 1;
 }
 return a;
 ";
             var result = Compile(sourceText);
             Console.WriteLine(result.Invoke());
+            Console.WriteLine(Index);
         }
     }
 }
