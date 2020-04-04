@@ -46,9 +46,11 @@
         <Compile Include="SyntaxTree\AssignNode.cs" />
         <Compile Include="SyntaxTree\DataNode.cs" />
         <Compile Include="SyntaxTree\ExpressionNode.cs" />
+        <Compile Include="SyntaxTree\IfNode.cs" />
         <Compile Include="SyntaxTree\Node.cs" />
         <Compile Include="SyntaxTree\OperationNode.cs" />
         <Compile Include="SyntaxTree\ReturnNode.cs" />
+        <Compile Include="SyntaxTree\WhileNode.cs" />
         <Compile Include="Tokenizer\ExpressionTokenizer.cs" />
         <Compile Include="Tokenizer\ProgramTokenizer.cs" />
         <Compile Include="Tokenizer\Tokenizer.cs" />
