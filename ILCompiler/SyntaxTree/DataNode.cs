@@ -27,9 +27,9 @@ namespace ILCompiler.SyntaxTree
             _dataType = DataType.Static;
         }
 
-        public DataNode(ushort variableIndex)
+        public DataNode(LocalBuilder localBuilder)
         {
-            _source = variableIndex;
+            _source = localBuilder;
             _dataType = DataType.Declared;
         }
 
@@ -38,7 +38,7 @@ namespace ILCompiler.SyntaxTree
             switch (_dataType)
             {
                 case DataType.Declared:
-                    generator.Emit(OpCodes.Stloc, (ushort)_source);
+                    generator.Emit(OpCodes.Stloc, (LocalBuilder)_source);
                     break;
                 case DataType.Static:
                     var fieldInfo = scope.GetField((string) _source);
@@ -61,7 +61,7 @@ namespace ILCompiler.SyntaxTree
                     generator.Emit(OpCodes.Ldc_I8, (long)_source);
                     break;
                 case DataType.Declared:
-                    generator.Emit(OpCodes.Ldloc, (ushort)_source);
+                    generator.Emit(OpCodes.Ldloc, (LocalBuilder)_source);
                     break;
                 case DataType.Static:
                     var fieldInfo = scope.GetField((string) _source);

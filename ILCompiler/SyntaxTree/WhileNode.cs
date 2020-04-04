@@ -23,7 +23,7 @@ namespace ILCompiler.SyntaxTree
             generator.MarkLabel(_insideLabel);
             _expressionNode.Generate(scope, generator);
             generator.Emit(OpCodes.Brfalse, _outsideLabel);
-            _insideNode?.Generate(scope, generator);
+            _insideNode?.FinalGenerate(scope, generator);
             generator.Emit(OpCodes.Br, _insideLabel);
             generator.MarkLabel(_outsideLabel);
         }

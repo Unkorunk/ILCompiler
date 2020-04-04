@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using ILCompiler.SyntaxTree;
 using ILCompiler.Token;
 
@@ -53,7 +54,7 @@ namespace ILCompiler.Parser
             throw new Exception("unexpected token");
         }
 
-        public ExpressionNode Parse(in TokenExpression[] tokens, in string[] names, in long[] constants, in List<string> declaredNames)
+        public ExpressionNode Parse(in TokenExpression[] tokens, in string[] names, in long[] constants, in Dictionary<string, LocalBuilder> declaredNames)
         {
             var constIndex = 0;
             var nameIndex = 0;
@@ -82,9 +83,9 @@ namespace ILCompiler.Parser
                 if (token == TokenExpression.Name)
                 {
                     var name = names[nameIndex++];
-                    if (declaredNames.Contains(name))
+                    if (declaredNames.ContainsKey(name))
                     {
-                        variableStack.Push(new DataNode(declaredNames.IndexOf(name)));
+                        variableStack.Push(new DataNode(declaredNames[name]));
                     }
                     else
                     {

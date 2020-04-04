@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 using ILCompiler.SyntaxTree;
 using ILCompiler.Token;
 using ILCompiler.Tokenizer;
@@ -23,7 +24,19 @@ namespace ILCompiler.Parser
         private string[] _expressions;
         private int _expressionIdx = 0;
 
-        private readonly List<string> _declaredNames = new List<string>();
+        private readonly Dictionary<string, LocalBuilder> _declaredNames = new Dictionary<string, LocalBuilder>();
+
+        private void AddNode(Node node, ref Node startNode, ref Node parentNode)
+        {
+            if (startNode == null)
+            {
+                startNode = node;
+                parentNode = node;
+            }
+
+            parentNode.NextNode = node;
+            parentNode = parentNode.NextNode;
+        }
 
         private bool Accept(TokenProgram tokenProgram)
         {
@@ -58,11 +71,12 @@ namespace ILCompiler.Parser
 
         private DataNode GetDataNode(string name)
         {
-            return _declaredNames.Contains(name) ? new DataNode(_declaredNames.IndexOf(name)) : new DataNode(name);
+            return _declaredNames.ContainsKey(name) ? new DataNode(_declaredNames[name]) : new DataNode(name);
         }
         
         private Node Body()
         {
+            Node startNode = null, parentNode = null;
             while (true)
             {
                 if (Accept(TokenProgram.Name))
@@ -72,6 +86,7 @@ namespace ILCompiler.Parser
                     var expressionNode = Expr();
                     Expect(TokenProgram.Sem);
                     var assignNode = new AssignNode(GetDataNode(name), expressionNode);
+                    AddNode(assignNode, ref startNode, ref parentNode);
                 } else if (Accept(TokenProgram.If))
                 {
                     Expect(TokenProgram.ROpen);
@@ -88,6 +103,7 @@ namespace ILCompiler.Parser
                         Expect(TokenProgram.CClose);
                     }
                     var ifNode = new IfNode(expressionNode, thenNode, elseNode);
+                    AddNode(ifNode, ref startNode, ref parentNode);
                 } else if (Accept(TokenProgram.While))
                 {
                     Expect(TokenProgram.ROpen);
@@ -97,6 +113,7 @@ namespace ILCompiler.Parser
                     var insideNode = Body();
                     Expect(TokenProgram.CClose);
                     var whileNode = new WhileNode(expressionNode, insideNode);
+                    AddNode(whileNode, ref startNode, ref parentNode);
                 }
                 else
                 {
@@ -104,34 +121,38 @@ namespace ILCompiler.Parser
                 }
             }
 
-            return null;
+            return startNode;
         }
 
-        private void Program()
+        private Node Program(in ILGenerator generator)
         {
+            Node startNode = null, parentNode = null;
+
             if (Accept(TokenProgram.Decl))
             {
                 if (Accept(TokenProgram.Name))
                 {
                     var name1 = _names[_namesIdx++];
-                    if (_declaredNames.Contains(name1)) throw new Exception("redeclaration variable");
-                    _declaredNames.Add(name1);
+                    if (_declaredNames.ContainsKey(name1)) throw new Exception("redeclaration variable");
+                    _declaredNames.Add(name1, generator.DeclareLocal(typeof(long)));
                     if (Accept(TokenProgram.Assign))
                     {
                         var expressionNode = Expr();
                         var assignNode = new AssignNode(GetDataNode(name1), expressionNode);
+                        AddNode(assignNode, ref startNode, ref parentNode);
                     }
 
                     while (Accept(TokenProgram.Comma))
                     {
                         Expect(TokenProgram.Name);
                         var name2 = _names[_namesIdx++];
-                        if (_declaredNames.Contains(name2)) throw new Exception("redeclaration variable");
-                        _declaredNames.Add(name2);
+                        if (_declaredNames.ContainsKey(name2)) throw new Exception("redeclaration variable");
+                        _declaredNames.Add(name2, generator.DeclareLocal(typeof(long)));
                         if (Accept(TokenProgram.Assign))
                         {
                             var expressionNode = Expr();
                             var assignNode = new AssignNode(GetDataNode(name2), expressionNode);
+                            AddNode(assignNode, ref startNode, ref parentNode);
                         }
                     }
                 }
@@ -139,16 +160,23 @@ namespace ILCompiler.Parser
                 Expect(TokenProgram.Sem);
             }
 
-            Body();
+            AddNode(Body(), ref startNode, ref parentNode);
+            while (parentNode.NextNode != null)
+            {
+                parentNode = parentNode.NextNode;
+            }
 
             Expect(TokenProgram.Return);
             Expect(TokenProgram.Name);
             var name3 = _names[_namesIdx++];
             var returnNode = new ReturnNode(GetDataNode(name3));
+            AddNode(returnNode, ref startNode, ref parentNode);
             Expect(TokenProgram.Sem);
+
+            return startNode;
         }
-        
-        public void Parse(in TokenProgram[] tokens, in string[] names, in string[] expressions)
+
+        public Node Parse(in ILGenerator generator, in TokenProgram[] tokens, in string[] names, in string[] expressions)
         {
             _declaredNames.Clear();
             
@@ -161,7 +189,7 @@ namespace ILCompiler.Parser
             _expressions = expressions;
             _expressionIdx = 0;
             
-            Program();
+            return Program(generator);
         }
     }
 }

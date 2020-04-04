@@ -25,10 +25,10 @@ namespace ILCompiler.SyntaxTree
 
             _expressionNode.Generate(scope, generator);
             generator.Emit(OpCodes.Brfalse, _elseLabel);
-            _thenNode?.Generate(scope, generator);
+            _thenNode?.FinalGenerate(scope, generator);
             generator.Emit(OpCodes.Br, _endLabel);
             generator.MarkLabel(_elseLabel);
-            _elseNode?.Generate(scope, generator);
+            _elseNode?.FinalGenerate(scope, generator);
             generator.MarkLabel(_endLabel);
         }
     }
