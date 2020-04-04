@@ -49,7 +49,11 @@ namespace ILCompiler.SyntaxTree
                     generator.Emit(OpCodes.Conv_I8);
                     break;
                 case Operation.UnEqual:
-                    throw new System.NotImplementedException();
+                    generator.Emit(OpCodes.Ceq);
+                    generator.Emit(OpCodes.Conv_I8);
+                    generator.Emit(OpCodes.Ldc_I8, 1L);
+                    generator.Emit(OpCodes.Xor);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

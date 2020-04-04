@@ -33,7 +33,7 @@ namespace ILCompiler
             var sourceText = @"
 decl a=1, b, i=2;
 b = 1;
-while (i < 30) {
+while (i != 30) {
     a = a + b;
     b = a - b;
     i = i + 1;
