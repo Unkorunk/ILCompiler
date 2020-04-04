@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection.Emit;
 
-namespace ILCompiler
+namespace ILCompiler.SyntaxTree
 {
     public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual }
     

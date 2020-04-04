@@ -1,6 +1,4 @@
-﻿using System.Reflection.Emit;
-
-namespace ILCompiler
+﻿namespace ILCompiler.SyntaxTree
 {
     public abstract class ExpressionNode : Node {}
 }

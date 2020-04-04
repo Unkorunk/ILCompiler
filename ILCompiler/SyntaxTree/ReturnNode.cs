@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection.Emit;
 
-namespace ILCompiler
+namespace ILCompiler.SyntaxTree
 {
     public class ReturnNode : Node
     {

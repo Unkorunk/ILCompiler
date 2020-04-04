@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ILCompiler.SyntaxTree;
 using ILCompiler.Token;
 using ILCompiler.Tokenizer;
 
