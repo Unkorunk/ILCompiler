@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 
 namespace ILCompiler
 {
-    public enum Operation { Add, Sub, Mul, Div }
+    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual }
     
     public class OperationNode : ExpressionNode
     {
@@ -36,6 +36,20 @@ namespace ILCompiler
                 case Operation.Div:
                     generator.Emit(OpCodes.Div);
                     break;
+                case Operation.Great:
+                    generator.Emit(OpCodes.Cgt);
+                    generator.Emit(OpCodes.Conv_I8);
+                    break;
+                case Operation.Less:
+                    generator.Emit(OpCodes.Clt);
+                    generator.Emit(OpCodes.Conv_I8);
+                    break;
+                case Operation.Equal:
+                    generator.Emit(OpCodes.Ceq);
+                    generator.Emit(OpCodes.Conv_I8);
+                    break;
+                case Operation.UnEqual:
+                    throw new System.NotImplementedException();
                 default:
                     throw new ArgumentOutOfRangeException();
             }

@@ -43,11 +43,10 @@ namespace ILCompiler.Parser
                 case TokenExpression.Sub: return Operation.Sub;
                 case TokenExpression.Mul: return Operation.Mul;
                 case TokenExpression.Div: return Operation.Div;
-                case TokenExpression.Great:
-                case TokenExpression.Less:
-                case TokenExpression.Equal:
-                case TokenExpression.UnEqual:
-                    throw new System.NotImplementedException();
+                case TokenExpression.Great: return Operation.Great;
+                case TokenExpression.Less: return Operation.Less;
+                case TokenExpression.Equal: return Operation.Equal;
+                case TokenExpression.UnEqual: return Operation.UnEqual;
             }
 
             throw new Exception("unexpected token");
