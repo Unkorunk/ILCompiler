@@ -13,6 +13,8 @@
         Equal,
         UnEqual,
         Open,
-        Close
+        Close,
+        LogicalAnd,
+        LogicalOr
     }
 }

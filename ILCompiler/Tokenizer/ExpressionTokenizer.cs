@@ -18,6 +18,8 @@ namespace ILCompiler.Tokenizer
                 case "<": return TokenExpression.Less;
                 case "==": return TokenExpression.Equal;
                 case "!=": return TokenExpression.UnEqual;
+                case "&&": return TokenExpression.LogicalAnd;
+                case "||": return TokenExpression.LogicalOr;
             }
 
             if (long.TryParse(rawToken, out _))
@@ -38,7 +40,7 @@ namespace ILCompiler.Tokenizer
 
         public TokenExpression[] Tokenize(string expressionText, out string[] names, out long[] constants)
         {
-            var symbols = new[] {"+", "-", "*", "/", ">", "<", "==", "!="};
+            var symbols = new[] {"+", "-", "*", "/", ">", "<", "==", "!=", "&&", "||"};
             foreach (var symbol in symbols)
             {
                 expressionText = expressionText.Replace(symbol, " " + symbol + " ");

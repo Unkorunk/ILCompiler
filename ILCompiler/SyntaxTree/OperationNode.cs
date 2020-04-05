@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 
 namespace ILCompiler.SyntaxTree
 {
-    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual }
+    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual, LogicalOr, LogicalAnd }
     
     public class OperationNode : ExpressionNode
     {
@@ -21,6 +21,12 @@ namespace ILCompiler.SyntaxTree
             foreach (var argument in _arguments)
             {
                 argument.Generate(scope, generator);
+                if (_operation == Operation.LogicalOr || _operation == Operation.LogicalAnd)
+                {
+                    generator.Emit(OpCodes.Ldc_I8, 0L);
+                    generator.Emit(OpCodes.Cgt_Un);
+                    generator.Emit(OpCodes.Conv_I8);
+                }
             }
             switch (_operation)
             {
@@ -53,6 +59,12 @@ namespace ILCompiler.SyntaxTree
                     generator.Emit(OpCodes.Conv_I8);
                     generator.Emit(OpCodes.Ldc_I8, 1L);
                     generator.Emit(OpCodes.Xor);
+                    break;
+                case Operation.LogicalAnd:
+                    generator.Emit(OpCodes.And);
+                    break;
+                case Operation.LogicalOr:
+                    generator.Emit(OpCodes.Or);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

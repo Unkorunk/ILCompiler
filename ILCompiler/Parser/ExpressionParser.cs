@@ -13,25 +13,30 @@ namespace ILCompiler.Parser
             return (token == TokenExpression.Add || token == TokenExpression.Sub ||
                     token == TokenExpression.Mul || token == TokenExpression.Div ||
                     token == TokenExpression.Great || token == TokenExpression.Less ||
-                    token == TokenExpression.Equal || token == TokenExpression.UnEqual);
+                    token == TokenExpression.Equal || token == TokenExpression.UnEqual ||
+                    token == TokenExpression.LogicalAnd || token == TokenExpression.LogicalOr);
         }
 
         private int GetPriority(TokenExpression token)
         {
             switch (token)
             {
+                case TokenExpression.LogicalOr:
+                    return 0;
+                case TokenExpression.LogicalAnd:
+                    return 1;
                 case TokenExpression.Equal:
                 case TokenExpression.UnEqual:
-                    return 0;
+                    return 2;
                 case TokenExpression.Great:
                 case TokenExpression.Less:
-                    return 1;
+                    return 3;
                 case TokenExpression.Add:
                 case TokenExpression.Sub:
-                    return 2;
+                    return 4;
                 case TokenExpression.Div:
                 case TokenExpression.Mul:
-                    return 3;
+                    return 5;
                 default:
                     throw new Exception("unexpected token");
             }
@@ -49,6 +54,8 @@ namespace ILCompiler.Parser
                 case TokenExpression.Less: return Operation.Less;
                 case TokenExpression.Equal: return Operation.Equal;
                 case TokenExpression.UnEqual: return Operation.UnEqual;
+                case TokenExpression.LogicalAnd: return Operation.LogicalAnd;
+                case TokenExpression.LogicalOr: return Operation.LogicalOr;
             }
 
             throw new Exception("unexpected token");
