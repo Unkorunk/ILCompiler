@@ -85,6 +85,10 @@ namespace ILCompiler.Parser
 
         private DataNode GetDataNode(string name)
         {
+            if (name == "x") return new DataNode(true, 0);
+            if (name == "y") return new DataNode(true, 1);
+            if (name == "z") return new DataNode(true, 2);
+            
             return _declaredNames.ContainsKey(name) ? new DataNode(_declaredNames[name]) : new DataNode(name);
         }
 

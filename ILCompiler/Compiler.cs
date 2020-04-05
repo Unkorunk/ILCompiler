@@ -7,13 +7,14 @@ namespace ILCompiler
 {
     public class Compiler
     {
-        public delegate long CompileResult();
+        public delegate long CompileResult(long x, long y, long z);
 
         public static Type Scope = typeof(Program);
         
         public static CompileResult Compile(string sourceText)
         {
-            var dynamicMethod = new DynamicMethod(Guid.NewGuid().ToString(), typeof(long), null);
+            var dynamicMethod = new DynamicMethod(Guid.NewGuid().ToString(), typeof(long), 
+                new []{typeof(long), typeof(long), typeof(long)});
             var generator = dynamicMethod.GetILGenerator();
             
             string[] programNames;

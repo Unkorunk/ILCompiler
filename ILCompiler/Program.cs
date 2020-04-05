@@ -14,7 +14,7 @@ namespace ILCompiler
         public static void Main(string[] args)
         {
             var sourceText = @"
-decl a = 1, b = 1, i = 0;
+decl a = x, b = y, i = z;
 while (i < 20) {
     a = a + b;
     b = a - b;
@@ -24,7 +24,7 @@ while (i < 20) {
 return a;
 ";
             var result = Compiler.Compile(sourceText);
-            result?.Invoke();
+            result?.Invoke(1, 1, 0);
         }
     }
 }

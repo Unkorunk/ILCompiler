@@ -9,7 +9,8 @@ namespace ILCompiler.SyntaxTree
         {
             Const,
             Declared,
-            Static
+            Static,
+            Argument
         }
 
         private DataType _dataType;
@@ -33,6 +34,12 @@ namespace ILCompiler.SyntaxTree
             _dataType = DataType.Declared;
         }
 
+        public DataNode(bool argument, short argumentIdx)
+        {
+            _source = argumentIdx;
+            _dataType = DataType.Argument;
+        }
+
         public void Store(Type scope, ILGenerator generator)
         {
             switch (_dataType)
@@ -49,6 +56,10 @@ namespace ILCompiler.SyntaxTree
                     }
                     generator.Emit(OpCodes.Stsfld, fieldInfo);
                     break;
+                case DataType.Argument:
+                    throw new Exception("data cannot be written to the argument");
+                case DataType.Const:
+                    throw new Exception("bug");
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -72,6 +83,9 @@ namespace ILCompiler.SyntaxTree
                         throw new Exception("invalid field type");
                     }
                     generator.Emit(OpCodes.Ldsfld, fieldInfo);
+                    break;
+                case DataType.Argument:
+                    generator.Emit(OpCodes.Ldarg, (short)_source);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
