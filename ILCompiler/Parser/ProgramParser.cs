@@ -40,9 +40,15 @@ namespace ILCompiler.Parser
                 parentNode = parentNode.NextNode;
             }
         }
+
+        private bool Check(TokenProgram tokenProgram)
+        {
+            return _tokenIdx < _tokens.Length && _tokens[_tokenIdx] == tokenProgram;
+        }
+        
         private bool Accept(TokenProgram tokenProgram)
         {
-            if (_tokenIdx < _tokens.Length && _tokens[_tokenIdx] == tokenProgram)
+            if (Check(tokenProgram))
             {
                 _tokenIdx++;
                 return true;
@@ -102,7 +108,7 @@ namespace ILCompiler.Parser
                         Expect(TokenProgram.ROpen);
 
                         var listExpressions = new List<ExpressionNode>();
-                        if (Accept(TokenProgram.Expr))
+                        if (Check(TokenProgram.Expr))
                         {
                             listExpressions.Add(Expr());
                             while (Accept(TokenProgram.Comma))
@@ -116,6 +122,7 @@ namespace ILCompiler.Parser
                         
                         listExpressions.Reverse();
                         var functionNode = new OperationNode(Operation.Function, listExpressions.ToArray(), name, typeof(void));
+                        AddNode(functionNode, ref startNode, ref parentNode);
                     }
                 }
                 else if (Accept(TokenProgram.If))
