@@ -111,7 +111,7 @@ namespace ILCompiler.Parser
                 {
                     if (operationStack.Peek() == TokenExpression.Open)
                     {
-                        throw new Exception("empty brackets");
+                        throw new Exception("empty or not needed brackets");
                     }
                     
                     while (operationStack.Count != 0 && operationStack.Peek() != TokenExpression.Open)

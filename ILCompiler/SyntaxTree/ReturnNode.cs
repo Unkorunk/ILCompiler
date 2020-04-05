@@ -5,24 +5,24 @@ namespace ILCompiler.SyntaxTree
 {
     public class ReturnNode : Node
     {
-        private DataNode _dataNode;
+        private ExpressionNode _expressionNode;
         private bool _flowReturn;
         
-        public ReturnNode(DataNode dataNode)
+        public ReturnNode(ExpressionNode expressionNode)
         {
-            _dataNode = dataNode;
+            _expressionNode = expressionNode;
             _flowReturn = true;
         }
 
-        public ReturnNode(DataNode dataNode, bool flowReturn)
+        public ReturnNode(ExpressionNode expressionNode, bool flowReturn)
         {
-            _dataNode = dataNode;
+            _expressionNode = expressionNode;
             _flowReturn = false;
         }
-        
+
         public override void Generate(Type scope, ILGenerator generator)
         {
-            _dataNode.Generate(scope, generator);
+            _expressionNode.Generate(scope, generator);
             generator.Emit(OpCodes.Ret);
             FlowReturn = _flowReturn;
         }

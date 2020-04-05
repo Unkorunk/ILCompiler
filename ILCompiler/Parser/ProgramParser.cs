@@ -14,7 +14,7 @@ namespace ILCompiler.Parser
         //                    ("ropen", [ "expr", { "comma", "expr" } ], "rclose", "sem") ] |
         //          [ "if", "ropen", expr, "rclose", "copen", body, "cclose", ["else", "copen", body, "cclose"]] |
         //          [ "while, "ropen", expr, "rclose", "copen", body, "cclose" ] |
-        //          [ "return", "name", "sem" ] }
+        //          [ "return", expr, "sem" ] }
         
         private TokenProgram[] _tokens;
         private int _tokenIdx;
@@ -157,9 +157,8 @@ namespace ILCompiler.Parser
                 }
                 else if (Accept(TokenProgram.Return))
                 {
-                    Expect(TokenProgram.Name);
-                    var name3 = _names[_namesIdx++];
-                    var returnNode = new ReturnNode(GetDataNode(name3));
+                    var expression = Expr();
+                    var returnNode = new ReturnNode(expression);
                     AddNode(returnNode, ref startNode, ref parentNode);
                     Expect(TokenProgram.Sem);
                 }

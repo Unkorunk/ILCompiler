@@ -84,42 +84,71 @@ namespace ILCompiler.Tokenizer
             var tokens = new List<TokenProgram>();
             var listNames = new List<string>();
             var listExpressions = new List<string>();
+            
             var parsingExpression = false;
+            TokenProgram startToken = TokenProgram.Assign;
+            var balance = 0;
+            var startBalance = 0;
+            
             foreach (var rawToken in rawTokens)
             {
                 if (TryParse(rawToken, out TokenProgram token))
                 {
+                    if (token == TokenProgram.ROpen)
+                    {
+                        balance++;
+                    } else if (token == TokenProgram.RClose)
+                    {
+                        balance--;
+                    }
+                    
                     if (!parsingExpression)
                     {
                         tokens.Add(token);
-                        if (token == TokenProgram.Assign)
+                        if (token == TokenProgram.Assign || token == TokenProgram.ROpen || token == TokenProgram.Return)
                         {
                             parsingExpression = true;
                             listExpressions.Add(string.Empty);
                             tokens.Add(TokenProgram.Expr);
+                            if (token == TokenProgram.Assign)
+                            {
+                                startToken = TokenProgram.Assign;
+                            } else if (token == TokenProgram.Return)
+                            {
+                                startToken = TokenProgram.Return;
+                            } else if (token == TokenProgram.ROpen)
+                            {
+                                startToken = TokenProgram.ROpen;
+                            }
+                            startBalance = balance;
                         }
-                        else if (token == TokenProgram.ROpen)
-                        {
-                            parsingExpression = true;
-                            listExpressions.Add(string.Empty);
-                            tokens.Add(TokenProgram.Expr);
-                        }
-                    }
-                    else if (token == TokenProgram.Sem || token == TokenProgram.Comma || token == TokenProgram.RClose)
-                    {
-                        parsingExpression = false;
-                        tokens.Add(token);
                     }
                     else
                     {
-                        listExpressions[listExpressions.Count - 1] += rawToken;
+                        if (startToken == TokenProgram.Assign && (token == TokenProgram.Comma || token == TokenProgram.Sem) ||
+                            startToken == TokenProgram.ROpen && token == TokenProgram.RClose && balance == startBalance - 1 ||
+                            startToken == TokenProgram.Return && token == TokenProgram.Sem)
+                        {
+                            parsingExpression = false;
+                            tokens.Add(token);
+                        }
+                        else
+                        {
+                            listExpressions[listExpressions.Count - 1] += rawToken;
+                        }
                     }
                 }
                 else if (!parsingExpression)
                 {
-                    tokens.Add(TokenProgram.Name);
-                    if (!IsName(rawToken)) throw new Exception("invalid variable name");
-                    listNames.Add(rawToken);
+                    if (IsName(rawToken))
+                    {
+                        tokens.Add(TokenProgram.Name);
+                        listNames.Add(rawToken);
+                    }
+                    else
+                    {
+                        throw new Exception("invalid data");
+                    }
                 }
                 else
                 {

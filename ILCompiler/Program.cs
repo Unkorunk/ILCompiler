@@ -42,7 +42,7 @@ namespace ILCompiler
             var sourceText = @"
 decl a=1, b;
 b = 1;
-while (Index < 8) {
+while ((Index + 1) < 8) {
     a = a + b;
     b = a - b;
     Index = Index + 1;
@@ -50,16 +50,7 @@ while (Index < 8) {
 
 Print(a);
 
-if (a) {
-    return a;
-} else {
-    if (a) {
-        Print(1);
-    } else {
-        return b;
-    }
-}
-return a;
+return (0 + a) - b;
 
 ";
             var result = Compile(sourceText);
