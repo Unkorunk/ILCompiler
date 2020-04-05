@@ -125,15 +125,15 @@ namespace ILCompiler.Parser
                     var name = names[nameIndex++];
                     if (name == "x")
                     {
-                        return new DataNode(true, 0);
+                        variableStack.Push(new DataNode(true, 0));
                     }
                     else if (name == "y")
                     {
-                        return new DataNode(true, 1);
+                        variableStack.Push(new DataNode(true, 1));
                     }
-                    if (name == "z")
+                    else if (name == "z")
                     {
-                        return new DataNode(true, 2);
+                        variableStack.Push(new DataNode(true, 2));
                     }
                     else if (declaredNames.ContainsKey(name))
                     {
