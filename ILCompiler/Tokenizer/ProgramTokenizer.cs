@@ -129,8 +129,23 @@ namespace ILCompiler.Tokenizer
                             startToken == TokenProgram.ROpen && token == TokenProgram.RClose && balance == startBalance - 1 ||
                             startToken == TokenProgram.Return && token == TokenProgram.Sem)
                         {
+                            if (listExpressions[listExpressions.Count - 1] == string.Empty)
+                            {
+                                tokens.RemoveAt(tokens.Count - 1);
+                                listExpressions.RemoveAt(listExpressions.Count - 1);
+                            }
                             parsingExpression = false;
                             tokens.Add(token);
+                        } else if (startToken == TokenProgram.ROpen && token == TokenProgram.Comma)
+                        {
+                            if (listExpressions[listExpressions.Count - 1] == string.Empty)
+                            {
+                                tokens.RemoveAt(tokens.Count - 1);
+                                listExpressions.RemoveAt(listExpressions.Count - 1);
+                            }
+                            listExpressions.Add(string.Empty);
+                            tokens.Add(TokenProgram.Comma);
+                            tokens.Add(TokenProgram.Expr);
                         }
                         else
                         {
