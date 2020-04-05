@@ -74,6 +74,7 @@ namespace ILCompiler.Parser
             
             var variableStack = new Stack<ExpressionNode>();
             var operationStack = new Stack<TokenExpression>();
+            var functionStack = new Stack<(string, int)>();
 
             void ProcessAction()
             {
@@ -112,14 +113,30 @@ namespace ILCompiler.Parser
                     var firstArg = variableStack.Pop();
                     variableStack.Push(new OperationNode(GetOperation(operation), new[] {firstArg}));
                 }
+                else if (operation == TokenExpression.Function)
+                {
+                    var (functionName, expectedArgs) = functionStack.Pop();
+                    if (variableStack.Count < expectedArgs) throw new Exception("invalid expression");
+
+                    var args = new ExpressionNode[expectedArgs];
+                    for (int i = expectedArgs - 1; i >= 0; i--)
+                    {
+                        args[i] = variableStack.Pop();
+                    }
+                    
+                    variableStack.Push(new OperationNode(Operation.Function, args, functionName, typeof(long)));
+                }
                 else
                 {
                     throw new System.NotImplementedException();
                 }
             }
 
-            foreach (var token in tokens)
+            for (var i = 0; i < tokens.Length; i++)
             {
+                var token = tokens[i];
+                if (token == TokenExpression.Comma) continue;
+                
                 if (token == TokenExpression.Name)
                 {
                     var name = names[nameIndex++];
@@ -139,9 +156,23 @@ namespace ILCompiler.Parser
                     {
                         variableStack.Push(new DataNode(declaredNames[name]));
                     }
-                    else
+                    else if (i + 1 < tokens.Length && tokens[i + 1] != TokenExpression.Open)
                     {
                         variableStack.Push(new DataNode(name));
+                    }
+                    else
+                    {
+                        var expectedArgs = 1;
+                        for (int j = i; j < tokens.Length; j++)
+                        {
+                            if (tokens[j] == TokenExpression.Close) break;
+                            if (tokens[j] == TokenExpression.Comma) expectedArgs++;
+                        }
+
+                        if (i + 2 < tokens.Length && tokens[i + 2] == TokenExpression.Close) expectedArgs = 0;
+                        
+                        functionStack.Push((name, expectedArgs));
+                        operationStack.Push(TokenExpression.Function);
                     }
                 }
                 else if (token == TokenExpression.Const)
@@ -158,10 +189,11 @@ namespace ILCompiler.Parser
                 }
                 else if (token == TokenExpression.Close)
                 {
-                    if (operationStack.Peek() == TokenExpression.Open)
-                    {
-                        throw new Exception("empty or not needed brackets");
-                    }
+                    // TODO: create check on empty brackets
+                    // if (operationStack.Peek() == TokenExpression.Open)
+                    // {
+                    //     throw new Exception("empty or not needed brackets");
+                    // }
                     
                     while (operationStack.Count != 0 && operationStack.Peek() != TokenExpression.Open)
                     {
@@ -179,8 +211,10 @@ namespace ILCompiler.Parser
                 }
                 else if (IsBinaryOperation(token))
                 {
-                    while (operationStack.Count != 0 && (operationStack.Peek() == TokenExpression.LogicalNot ||
-                           IsBinaryOperation(operationStack.Peek()) && GetPriority(operationStack.Peek()) >= GetPriority(token)))
+                    while (operationStack.Count != 0 && (operationStack.Peek() == TokenExpression.Function ||
+                                                         operationStack.Peek() == TokenExpression.LogicalNot ||
+                                                         IsBinaryOperation(operationStack.Peek()) &&
+                                                         GetPriority(operationStack.Peek()) >= GetPriority(token)))
                     {
                         ProcessAction();
                     }

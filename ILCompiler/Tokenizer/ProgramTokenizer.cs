@@ -115,9 +115,9 @@ namespace ILCompiler.Tokenizer
                     }
                     else
                     {
-                        if (startToken == TokenProgram.Assign && (token == TokenProgram.Comma || token == TokenProgram.Sem) ||
+                        if (startToken == TokenProgram.Assign && (token == TokenProgram.Comma || token == TokenProgram.Sem) && balance == startBalance ||
                             startToken == TokenProgram.ROpen && token == TokenProgram.RClose && balance == startBalance - 1 ||
-                            startToken == TokenProgram.Return && token == TokenProgram.Sem)
+                            startToken == TokenProgram.Return && token == TokenProgram.Sem && balance == startBalance)
                         {
                             if (listExpressions[listExpressions.Count - 1] == string.Empty)
                             {

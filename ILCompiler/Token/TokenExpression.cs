@@ -18,6 +18,8 @@
         Close,
         LogicalAnd,
         LogicalOr,
-        LogicalNot
+        LogicalNot,
+        Function,
+        Comma
     }
 }

@@ -6,11 +6,21 @@ namespace ILCompiler
     {
         public static void PrintLine(long x) { Console.WriteLine(x); }
 
+        public static void ManyArgs(long a, long b, long c)
+        {
+            Console.WriteLine((a + b) * c);
+        }
+        public static long Add(long a, long b) => a + b;
+        public static long Two() => 2;
+
         public static void Main(string[] args)
         {
             var result1 = Compiler.Compile(@"
-                decl a, b, c;
-                a = x + y;
+                decl a, b, c;     
+                ManyArgs(   32,    132,53);
+                a = Add(x, y);
+                c = Two();
+                PrintLine(c);
                 b = z - 12;
                 if (a > b) {
                     PrintLine(42);
