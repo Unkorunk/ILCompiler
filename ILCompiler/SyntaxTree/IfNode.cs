@@ -30,6 +30,12 @@ namespace ILCompiler.SyntaxTree
             generator.MarkLabel(_elseLabel);
             _elseNode?.FinalGenerate(scope, generator);
             generator.MarkLabel(_endLabel);
+            
+            FlowReturn = false;
+            if (_elseNode != null && _thenNode != null)
+            {
+                FlowReturn = _thenNode.FlowReturn && _elseNode.FlowReturn;
+            }
         }
     }
 }

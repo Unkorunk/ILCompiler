@@ -1,19 +1,32 @@
 ﻿using System;
+using System.Reflection;
 using System.Reflection.Emit;
 
 namespace ILCompiler.SyntaxTree
 {
-    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual, LogicalOr, LogicalAnd }
+    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual, LogicalOr, LogicalAnd, Function }
     
     public class OperationNode : ExpressionNode
     {
         private Operation _operation;
         private ExpressionNode[] _arguments;
         
+        private string _functionName;
+        private Type _returnType;
+        
         public OperationNode(Operation operation, ExpressionNode[] arguments)
         {
             _operation = operation;
             _arguments = arguments;
+            _functionName = string.Empty;
+            _returnType = null;
+        }
+        
+        public OperationNode(Operation operation, ExpressionNode[] arguments, 
+            string functionName, Type returnType) : this(operation, arguments)
+        {
+            _functionName = functionName;
+            _returnType = returnType;
         }
 
         public override void Generate(Type scope, ILGenerator generator)
@@ -66,6 +79,37 @@ namespace ILCompiler.SyntaxTree
                 case Operation.LogicalOr:
                     generator.Emit(OpCodes.Or);
                     break;
+                case Operation.Function:
+                    var methods = scope.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly |
+                                                  BindingFlags.Public | BindingFlags.Static);
+                    MethodInfo methodInfo = null;
+                    foreach (var method in methods)
+                    {
+                        if (method.Name == _functionName && method.ReturnType == _returnType &&
+                            method.GetParameters().Length == _arguments.Length)
+                        {
+                            var valid = true;
+                            foreach (var parameter in method.GetParameters())
+                            {
+                                if (parameter.ParameterType != typeof(long))
+                                {
+                                    valid = false;
+                                    break;
+                                }
+                            }
+
+                            if (valid)
+                            {
+                                methodInfo = method;
+                            }
+                        }
+                    }
+
+                    if (methodInfo == null) throw new Exception("invalid function");
+                    
+                    generator.Emit(OpCodes.Call, methodInfo);
+                    
+                    return;
                 default:
                     throw new ArgumentOutOfRangeException();
             }

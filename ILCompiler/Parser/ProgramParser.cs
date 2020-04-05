@@ -9,20 +9,21 @@ namespace ILCompiler.Parser
 {
     public class ProgramParser
     {
-        // program = [ "decl", ["name", ["assign", expr]], { "comma", "name", ["assign", expr] } ], body, "return", "name", "sem"
-        // body = { [ "name", "assign", expr, "sem" ] |
-        //          [ "if", "ropen", expr, "rclose", "copen", body, "cclose", ["else", "copen", body, "cclose"]]
-        //          [ "while, "ropen", expr, "rclose", "copen", body, "cclose" ] }
-
-
+        // program = [ "decl", ["name", ["assign", expr], { "comma", "name", ["assign", expr] }] ], body
+        // body = { [ "name", ("assign", expr, "sem") |
+        //                    ("ropen", [ "expr", { "comma", "expr" } ], "rclose", "sem") ] |
+        //          [ "if", "ropen", expr, "rclose", "copen", body, "cclose", ["else", "copen", body, "cclose"]] |
+        //          [ "while, "ropen", expr, "rclose", "copen", body, "cclose" ] |
+        //          [ "return", "name", "sem" ] }
+        
         private TokenProgram[] _tokens;
-        private int _tokenIdx = 0;
-        
+        private int _tokenIdx;
+
         private string[] _names;
-        private int _namesIdx = 0;
-        
+        private int _namesIdx;
+
         private string[] _expressions;
-        private int _expressionIdx = 0;
+        private int _expressionIdx;
 
         private readonly Dictionary<string, LocalBuilder> _declaredNames = new Dictionary<string, LocalBuilder>();
 
@@ -33,14 +34,15 @@ namespace ILCompiler.Parser
                 startNode = node;
                 parentNode = node;
             }
-
-            parentNode.NextNode = node;
-            parentNode = parentNode.NextNode;
+            else
+            {
+                parentNode.NextNode = node;
+                parentNode = parentNode.NextNode;
+            }
         }
-
         private bool Accept(TokenProgram tokenProgram)
         {
-            if (_tokens[_tokenIdx] == tokenProgram)
+            if (_tokenIdx < _tokens.Length && _tokens[_tokenIdx] == tokenProgram)
             {
                 _tokenIdx++;
                 return true;
@@ -55,8 +57,14 @@ namespace ILCompiler.Parser
             {
                 return;
             }
+
             throw new Exception("unexpected token");
         }
+
+        private bool EndOfFile()
+        {
+            return _tokenIdx >= _tokens.Length;
+        } 
 
         private ExpressionNode Expr()
         {
@@ -73,7 +81,7 @@ namespace ILCompiler.Parser
         {
             return _declaredNames.ContainsKey(name) ? new DataNode(_declaredNames[name]) : new DataNode(name);
         }
-        
+
         private Node Body()
         {
             Node startNode = null, parentNode = null;
@@ -82,12 +90,35 @@ namespace ILCompiler.Parser
                 if (Accept(TokenProgram.Name))
                 {
                     var name = _names[_namesIdx++];
-                    Expect(TokenProgram.Assign);
-                    var expressionNode = Expr();
-                    Expect(TokenProgram.Sem);
-                    var assignNode = new AssignNode(GetDataNode(name), expressionNode);
-                    AddNode(assignNode, ref startNode, ref parentNode);
-                } else if (Accept(TokenProgram.If))
+                    if (Accept(TokenProgram.Assign))
+                    {
+                        var expressionNode = Expr();
+                        Expect(TokenProgram.Sem);
+                        var assignNode = new AssignNode(GetDataNode(name), expressionNode);
+                        AddNode(assignNode, ref startNode, ref parentNode);
+                    }
+                    else
+                    {
+                        Expect(TokenProgram.ROpen);
+
+                        var listExpressions = new List<ExpressionNode>();
+                        if (Accept(TokenProgram.Expr))
+                        {
+                            listExpressions.Add(Expr());
+                            while (Accept(TokenProgram.Comma))
+                            {
+                                listExpressions.Add(Expr());
+                            }
+                        }
+                        
+                        Expect(TokenProgram.RClose);
+                        Expect(TokenProgram.Sem);
+                        
+                        listExpressions.Reverse();
+                        var functionNode = new OperationNode(Operation.Function, listExpressions.ToArray(), name, typeof(void));
+                    }
+                }
+                else if (Accept(TokenProgram.If))
                 {
                     Expect(TokenProgram.ROpen);
                     var expressionNode = Expr();
@@ -102,9 +133,11 @@ namespace ILCompiler.Parser
                         elseNode = Body();
                         Expect(TokenProgram.CClose);
                     }
+
                     var ifNode = new IfNode(expressionNode, thenNode, elseNode);
                     AddNode(ifNode, ref startNode, ref parentNode);
-                } else if (Accept(TokenProgram.While))
+                }
+                else if (Accept(TokenProgram.While))
                 {
                     Expect(TokenProgram.ROpen);
                     var expressionNode = Expr();
@@ -114,6 +147,14 @@ namespace ILCompiler.Parser
                     Expect(TokenProgram.CClose);
                     var whileNode = new WhileNode(expressionNode, insideNode);
                     AddNode(whileNode, ref startNode, ref parentNode);
+                }
+                else if (Accept(TokenProgram.Return))
+                {
+                    Expect(TokenProgram.Name);
+                    var name3 = _names[_namesIdx++];
+                    var returnNode = new ReturnNode(GetDataNode(name3));
+                    AddNode(returnNode, ref startNode, ref parentNode);
+                    Expect(TokenProgram.Sem);
                 }
                 else
                 {
@@ -165,21 +206,17 @@ namespace ILCompiler.Parser
             {
                 parentNode = parentNode.NextNode;
             }
-
-            Expect(TokenProgram.Return);
-            Expect(TokenProgram.Name);
-            var name3 = _names[_namesIdx++];
-            var returnNode = new ReturnNode(GetDataNode(name3));
-            AddNode(returnNode, ref startNode, ref parentNode);
-            Expect(TokenProgram.Sem);
+            
+            parentNode.NextNode = new ReturnNode(new DataNode(-1), false);
 
             return startNode;
         }
 
-        public Node Parse(in ILGenerator generator, in TokenProgram[] tokens, in string[] names, in string[] expressions)
+        public Node Parse(in ILGenerator generator, in TokenProgram[] tokens, in string[] names,
+            in string[] expressions)
         {
             _declaredNames.Clear();
-            
+
             _tokens = tokens;
             _tokenIdx = 0;
 
@@ -189,7 +226,10 @@ namespace ILCompiler.Parser
             _expressions = expressions;
             _expressionIdx = 0;
             
-            return Program(generator);
+            var startNode = Program(generator);
+            if (!EndOfFile()) throw new Exception("unexpected token");
+            
+            return startNode;
         }
     }
 }
