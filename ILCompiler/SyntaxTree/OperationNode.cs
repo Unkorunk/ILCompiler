@@ -4,7 +4,7 @@ using System.Reflection.Emit;
 
 namespace ILCompiler.SyntaxTree
 {
-    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual, LogicalOr, LogicalAnd, Function }
+    public enum Operation { Add, Sub, Mul, Div, Great, Less, Equal, UnEqual, LogicalOr, LogicalAnd, LogicalNot, Function }
     
     public class OperationNode : ExpressionNode
     {
@@ -34,7 +34,7 @@ namespace ILCompiler.SyntaxTree
             foreach (var argument in _arguments)
             {
                 argument.Generate(scope, generator);
-                if (_operation == Operation.LogicalOr || _operation == Operation.LogicalAnd)
+                if (_operation == Operation.LogicalOr || _operation == Operation.LogicalAnd || _operation == Operation.LogicalNot)
                 {
                     generator.Emit(OpCodes.Ldc_I8, 0L);
                     generator.Emit(OpCodes.Cgt_Un);
@@ -78,6 +78,10 @@ namespace ILCompiler.SyntaxTree
                     break;
                 case Operation.LogicalOr:
                     generator.Emit(OpCodes.Or);
+                    break;
+                case Operation.LogicalNot:
+                    generator.Emit(OpCodes.Ldc_I8, 1L);
+                    generator.Emit(OpCodes.Xor);
                     break;
                 case Operation.Function:
                     var methods = scope.GetMethods(BindingFlags.Instance | BindingFlags.DeclaredOnly |

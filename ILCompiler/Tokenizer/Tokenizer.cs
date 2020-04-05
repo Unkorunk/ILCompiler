@@ -24,12 +24,12 @@
 
         protected static void AddSpace(ref string sourceText, char symbol, char[] ignoreLeft, char[] ignoreRight)
         {
-            for (var i = 1; i < sourceText.Length - 1; i++)
+            for (var i = 0; i < sourceText.Length; i++)
             {
                 if (sourceText[i] == symbol)
                 {
                     var skip = false;
-                    if (ignoreLeft != null)
+                    if (i != 0 && ignoreLeft != null)
                     {
                         foreach (var ignoreChar in ignoreLeft)
                         {
@@ -41,7 +41,7 @@
                         }
                     }
 
-                    if (ignoreRight != null)
+                    if (i != sourceText.Length - 1 && ignoreRight != null)
                     {
                         foreach (var ignoreChar in ignoreRight)
                         {

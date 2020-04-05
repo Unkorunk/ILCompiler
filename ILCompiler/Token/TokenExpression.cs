@@ -17,6 +17,7 @@
         Open,
         Close,
         LogicalAnd,
-        LogicalOr
+        LogicalOr,
+        LogicalNot
     }
 }

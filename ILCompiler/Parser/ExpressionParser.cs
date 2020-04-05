@@ -40,6 +40,8 @@ namespace ILCompiler.Parser
                 case TokenExpression.Div:
                 case TokenExpression.Mul:
                     return 5;
+                case TokenExpression.LogicalNot:
+                    return 6;
                 default:
                     throw new Exception("unexpected token");
             }
@@ -59,6 +61,7 @@ namespace ILCompiler.Parser
                 case TokenExpression.UnEqual: return Operation.UnEqual;
                 case TokenExpression.LogicalAnd: return Operation.LogicalAnd;
                 case TokenExpression.LogicalOr: return Operation.LogicalOr;
+                case TokenExpression.LogicalNot: return Operation.LogicalNot;
             }
 
             throw new Exception("unexpected token");
@@ -74,12 +77,15 @@ namespace ILCompiler.Parser
 
             void ProcessAction()
             {
-                var secondArg = variableStack.Pop();
-                var firstArg = variableStack.Pop();
                 var operation = operationStack.Pop();
 
                 if (IsBinaryOperation(operation))
                 {
+                    if (variableStack.Count < 2) throw new Exception("invalid expression");
+                    
+                    var secondArg = variableStack.Pop();
+                    var firstArg = variableStack.Pop();
+                    
                     if (operation == TokenExpression.GreatEqual)
                     {
                         variableStack.Push(new OperationNode(Operation.LogicalOr, new ExpressionNode[]
@@ -99,6 +105,12 @@ namespace ILCompiler.Parser
                     {
                         variableStack.Push(new OperationNode(GetOperation(operation), new[] {firstArg, secondArg}));
                     }
+                }
+                else if (operation == TokenExpression.LogicalNot)
+                {
+                    if (variableStack.Count == 0) throw new Exception("invalid expression");
+                    var firstArg = variableStack.Pop();
+                    variableStack.Push(new OperationNode(GetOperation(operation), new[] {firstArg}));
                 }
                 else
                 {
@@ -123,6 +135,10 @@ namespace ILCompiler.Parser
                 else if (token == TokenExpression.Const)
                 {
                     variableStack.Push(new DataNode(constants[constIndex++]));
+                }
+                else if (token == TokenExpression.LogicalNot)
+                {
+                    operationStack.Push(token);
                 }
                 else if (token == TokenExpression.Open)
                 {
@@ -151,8 +167,8 @@ namespace ILCompiler.Parser
                 }
                 else if (IsBinaryOperation(token))
                 {
-                    while (operationStack.Count != 0 && 
-                           IsBinaryOperation(operationStack.Peek()) && GetPriority(operationStack.Peek()) >= GetPriority(token))
+                    while (operationStack.Count != 0 && (operationStack.Peek() == TokenExpression.LogicalNot ||
+                           IsBinaryOperation(operationStack.Peek()) && GetPriority(operationStack.Peek()) >= GetPriority(token)))
                     {
                         ProcessAction();
                     }

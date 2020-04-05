@@ -24,6 +24,7 @@ namespace ILCompiler.Tokenizer
                 case ")": return TokenExpression.Close;
                 case "<=": return TokenExpression.LessEqual;
                 case ">=": return TokenExpression.GreatEqual;
+                case "!": return TokenExpression.LogicalNot;
             }
 
             if (long.TryParse(rawToken, out _))
@@ -51,6 +52,7 @@ namespace ILCompiler.Tokenizer
             }
             AddSpace(ref expressionText, '<', null, new []{'='});
             AddSpace(ref expressionText, '>', null, new []{'='});
+            AddSpace(ref expressionText, '!', null, new []{'='});
 
             var rawTokens =
                 expressionText.Split(new[] {" ", Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries);
