@@ -14,7 +14,8 @@ namespace ILCompiler.Parser
                     token == TokenExpression.Mul || token == TokenExpression.Div ||
                     token == TokenExpression.Great || token == TokenExpression.Less ||
                     token == TokenExpression.Equal || token == TokenExpression.UnEqual ||
-                    token == TokenExpression.LogicalAnd || token == TokenExpression.LogicalOr);
+                    token == TokenExpression.LogicalAnd || token == TokenExpression.LogicalOr ||
+                    token == TokenExpression.GreatEqual || token == TokenExpression.LessEqual);
         }
 
         private int GetPriority(TokenExpression token)
@@ -30,6 +31,8 @@ namespace ILCompiler.Parser
                     return 2;
                 case TokenExpression.Great:
                 case TokenExpression.Less:
+                case TokenExpression.GreatEqual:
+                case TokenExpression.LessEqual:
                     return 3;
                 case TokenExpression.Add:
                 case TokenExpression.Sub:
@@ -77,7 +80,25 @@ namespace ILCompiler.Parser
 
                 if (IsBinaryOperation(operation))
                 {
-                    variableStack.Push(new OperationNode(GetOperation(operation), new[] {firstArg, secondArg}));
+                    if (operation == TokenExpression.GreatEqual)
+                    {
+                        variableStack.Push(new OperationNode(Operation.LogicalOr, new ExpressionNode[]
+                        {
+                            new OperationNode(Operation.Great, new []{firstArg, secondArg}),
+                            new OperationNode(Operation.Equal, new []{firstArg, secondArg}) 
+                        }));
+                    } else if (operation == TokenExpression.LessEqual)
+                    {
+                        variableStack.Push(new OperationNode(Operation.LogicalOr, new ExpressionNode[]
+                        {
+                            new OperationNode(Operation.Less, new []{firstArg, secondArg}),
+                            new OperationNode(Operation.Equal, new []{firstArg, secondArg}) 
+                        }));
+                    }
+                    else
+                    {
+                        variableStack.Push(new OperationNode(GetOperation(operation), new[] {firstArg, secondArg}));
+                    }
                 }
                 else
                 {

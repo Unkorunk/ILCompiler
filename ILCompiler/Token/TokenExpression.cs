@@ -12,6 +12,8 @@
         Less,
         Equal,
         UnEqual,
+        GreatEqual,
+        LessEqual,
         Open,
         Close,
         LogicalAnd,

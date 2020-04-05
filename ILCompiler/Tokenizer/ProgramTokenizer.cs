@@ -68,17 +68,7 @@ namespace ILCompiler.Tokenizer
             {
                 sourceText = sourceText.Replace(symbol, " " + symbol + " ");
             }
-
-            // process "=" (without destroy "!=" and "==") => " = "
-            for (var i = 1; i < sourceText.Length - 1; i++)
-            {
-                if (sourceText[i] == '=' && sourceText[i - 1] != '!' && sourceText[i - 1] != '=' &&
-                    sourceText[i + 1] != '=')
-                {
-                    sourceText = sourceText.Remove(i, 1).Insert(i, " = ");
-                    i += 2;
-                }
-            }
+            AddSpace(ref sourceText, '=', new []{'!', '='}, new []{'='});
 
             var rawTokens = sourceText.Split(new[] {" ", Environment.NewLine}, StringSplitOptions.RemoveEmptyEntries);
             var tokens = new List<TokenProgram>();

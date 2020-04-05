@@ -22,6 +22,45 @@
             return true;
         }
 
+        protected static void AddSpace(ref string sourceText, char symbol, char[] ignoreLeft, char[] ignoreRight)
+        {
+            for (var i = 1; i < sourceText.Length - 1; i++)
+            {
+                if (sourceText[i] == symbol)
+                {
+                    var skip = false;
+                    if (ignoreLeft != null)
+                    {
+                        foreach (var ignoreChar in ignoreLeft)
+                        {
+                            if (sourceText[i - 1] == ignoreChar)
+                            {
+                                skip = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (ignoreRight != null)
+                    {
+                        foreach (var ignoreChar in ignoreRight)
+                        {
+                            if (sourceText[i + 1] == ignoreChar)
+                            {
+                                skip = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (skip) continue;
+                    
+                    sourceText = sourceText.Remove(i, 1).Insert(i, " " + symbol + " ");
+                    i += 2;
+                }
+            }
+        }
+
         protected abstract bool TryParse(string rawToken, out T token);
         protected abstract T Parse(string rawToken);
     }
