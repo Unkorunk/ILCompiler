@@ -24,7 +24,7 @@ while (i < 20) {
 return a;
 ";
             var result = Compiler.Compile(sourceText);
-            result.Invoke();
+            result?.Invoke();
         }
     }
 }

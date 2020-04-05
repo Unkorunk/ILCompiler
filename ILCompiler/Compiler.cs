@@ -19,17 +19,25 @@ namespace ILCompiler
             string[] programNames;
             string[] programExpressions;
 
-            var programTokens = Tokenizers.Program.Tokenize(sourceText, out programNames, out programExpressions);
-            
-            var startNode = Parsers.Program.Parse(generator, programTokens, programNames, programExpressions);
-            startNode.FinalGenerate(Scope, generator);
-
-            if (!startNode.FlowReturn)
+            try
             {
-                throw new Exception("End of function is reachable without any return statement");
+                var programTokens = Tokenizers.Program.Tokenize(sourceText, out programNames, out programExpressions);
+
+                var startNode = Parsers.Program.Parse(generator, programTokens, programNames, programExpressions);
+                startNode.FinalGenerate(Scope, generator);
+
+                if (!startNode.FlowReturn)
+                {
+                    throw new Exception("End of function is reachable without any return statement");
+                }
+
+                return dynamicMethod.CreateDelegate(typeof(CompileResult)) as CompileResult;
             }
-            
-            return dynamicMethod.CreateDelegate(typeof(CompileResult)) as CompileResult;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[error] {ex.Message}");
+                return null;
+            }
         }
     }
 }
